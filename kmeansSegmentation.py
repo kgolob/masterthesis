@@ -1,18 +1,17 @@
-import os
 import datetime
+import os
 import shutil
 
-import pandas as pd
 import matplotlib.pyplot as plt
-from pandas import Series
-from scipy import stats
-from scipy.spatial.distance import cdist
-from sklearn.cluster import KMeans
 import numpy as np
+import pandas as pd
 from mpl_toolkits.mplot3d import Axes3D
+from scipy import stats
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
 
-mandant = 'xxxlutz_at'
-sampleSize = '100k'
+mandant = 'xxxlutz_de'
+sampleSize = '250k'
 path = '/media/backup/MasterThesis/output'
 clusters = 18
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
@@ -199,8 +198,27 @@ ax.scatter(x,y,z, c=kmeans.labels_.astype(float))
 savePlot(plt, '3d_plot_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
 
+##############################################
+# PCA
+fig = plt.figure(figsize=(8, 6))
+ax = Axes3D(fig, elev=-150, azim=110)
+X_reduced = PCA(n_components=3).fit_transform(df_tr)
+print(X_reduced)
+ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=kmeans.labels_.astype(float))
+# ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=df_tr,
+#            cmap=plt.cm.Set1, edgecolor='k', s=40)
+ax.set_title("First three PCA directions")
+# ax.set_xlabel("1st eigenvector")
+# ax.w_xaxis.set_ticklabels([])
+# ax.set_ylabel("2nd eigenvector")
+# ax.w_yaxis.set_ticklabels([])
+# ax.set_zlabel("3rd eigenvector")
+# ax.w_zaxis.set_ticklabels([])
+savePlot(plt, 'PCA_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
 
-
-
-
+fig = plt.figure(figsize=(12, 12))
+X_reduced = PCA(n_components=2).fit_transform(df_tr)
+plt.scatter(X_reduced[:, 0], X_reduced[:, 1], c=kmeans.labels_.astype(float))
+plt.ylim(0, 10000)
+savePlot(plt, 'PCA_2d_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
