@@ -5,7 +5,6 @@ import shutil
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from mpl_toolkits.mplot3d import Axes3D
 from scipy import stats
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -13,7 +12,7 @@ from sklearn.decomposition import PCA
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
 path = '/media/backup/MasterThesis/pca_output'
-clusters = 12
+clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters/'.format(path, mandant, sampleSize, clusters)
@@ -50,6 +49,8 @@ df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mand
 
 # drop customers which do not have a gender assigned - they do not provide any value for segmentation
 df = df.dropna(subset=['Gender'])
+# drop customers with negative orderSum - could have happened by a bug in the shop
+df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -78,7 +79,6 @@ clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMAL
 df_tr_std = stats.zscore(df_tr[clmns])
 
 reduced_data = PCA(n_components=2).fit_transform(df_tr_std)
-# kmeans = KMeans(init='k-means++', n_clusters=clusters, n_init=10)
 kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1)
 kmeans.fit(reduced_data)
 
@@ -95,6 +95,7 @@ Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot
 Z = Z.reshape(xx.shape)
+plt.figure(figsize=(16, 16))
 plt.figure(1)
 plt.clf()
 plt.imshow(Z, interpolation='nearest',
@@ -102,27 +103,30 @@ plt.imshow(Z, interpolation='nearest',
            cmap=plt.cm.Paired,
            aspect='auto', origin='lower')
 
-plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
+plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=10)
 # Plot the centroids as a white X
 centroids = kmeans.cluster_centers_
-scatter = plt.scatter(centroids[:, 0], centroids[:, 1],
-            marker='x', s=169, linewidths=3,
-            color='w', zorder=10)
-plt.title('K-means clustering on the customer dataset (PCA-reduced data)\n'
-          'Centroids are marked with white cross')
+# plt.scatter(centroids[:, 0], centroids[:, 1],
+#             marker='x', s=169, linewidths=3,
+#             color='w', zorder=10)
+# plt.title('K-means clustering on the customer dataset (PCA-reduced data)\n'
+#           'Centroids are marked with white cross')
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.xticks(())
 plt.yticks(())
-handles = [plt.Line2D([], [], marker="o", ls="",
-                      color=scatter.cmap(scatter.norm(yi))) for yi in centroids]
-#plt.legend((line1, line2, line3), ('label1', 'label2', 'label3'))
-#plt.legend(handles, np.unique(kmeans.labels_)
+# Plot the centroids with cluster numbers
+for i in range(len(centroids)):
+    #add label
+    plt.annotate(i,
+                 centroids[i],
+                 horizontalalignment='center',
+                 verticalalignment='center',
+                 size=20,
+                 color='w')
 # plt.show()
 savePlot(plt, 'pca_kmeans_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
-# cluster the data
-# kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1).fit(df_tr_std)
 labels = kmeans.labels_
 
 # glue back to original data
@@ -132,7 +136,14 @@ df_tr['clusters'] = labels
 clmns.extend(['clusters'])
 
 # lets analyze the clusters
+printToFile('Cluster means')
 printToFile(df_tr[clmns].groupby(['clusters']).mean())
+printToFile('#################################################')
+printToFile('Cluster min')
+printToFile(df_tr[clmns].groupby(['clusters']).min())
+printToFile('#################################################')
+printToFile('Cluster max')
+printToFile(df_tr[clmns].groupby(['clusters']).max())
 printToFile('#################################################')
 
 #################################

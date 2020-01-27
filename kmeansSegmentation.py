@@ -13,7 +13,7 @@ from sklearn.decomposition import PCA
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
 path = '/media/backup/MasterThesis/output'
-clusters = 18
+clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters/'.format(path, mandant, sampleSize, clusters)
@@ -50,6 +50,8 @@ df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mand
 
 # drop customers which do not have a gender assigned - they do not provide any value for segmentation
 df = df.dropna(subset=['Gender'])
+# drop customers with negative orderSum - could have happened by a bug in the shop
+df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -62,7 +64,6 @@ df_tr = df_metrics
 
 # transform to dummies
 df_tr = pd.get_dummies(df_tr, columns=['Gender',  'BonusCardOwner'])
-printToFile(df_tr['Age'].max())
 printToFile('#################################################')
 printToFile(df_tr.describe())
 printToFile('#################################################')
@@ -88,7 +89,14 @@ df_tr['clusters'] = labels
 clmns.extend(['clusters'])
 
 # lets analyze the clusters
+printToFile('Cluster means')
 printToFile(df_tr[clmns].groupby(['clusters']).mean())
+printToFile('#################################################')
+printToFile('Cluster min')
+printToFile(df_tr[clmns].groupby(['clusters']).min())
+printToFile('#################################################')
+printToFile('Cluster max')
+printToFile(df_tr[clmns].groupby(['clusters']).max())
 printToFile('#################################################')
 
 #################################
@@ -112,7 +120,9 @@ df_tr.to_csv(path_or_buf= outputPath +'clustered_customerData_{}_{}.csv'.format(
 
 outputFile.close()
 
-###################################################################
+####################   Visualisation   ####################
+plt.rc('font', size=16)
+plt.rc('axes', labelsize=30)
 # Visualize it:
 # plt.subplot(221)
 # plt.xlabel('TotalOrderSum')
@@ -126,17 +136,101 @@ outputFile.close()
 # plt.xlabel('Gender_Male')
 # plt.ylabel('clusters')
 # plt.scatter(df_tr['Gender_MALE'], df_tr['clusters'],  c=kmeans.labels_.astype(float))
+# plt.figure(figsize=(12, 12))
+# plt.scatter(df_tr.iloc[:,1], df_tr.iloc[:, 2],  c=kmeans.labels_.astype(float))
+# plt.xlim(0, 40)
+# plt.xlabel('Alter')
+# plt.ylim(0, 10000)
+# plt.ylabel('Total spent in €')
+# savePlot(plt, 'testplot')
+
+####################   Histograms   ####################
+# This is  the colormap I'd like to use.
+cm = plt.cm.get_cmap('RdYlBu_r')
 plt.figure(figsize=(12, 12))
-plt.scatter(df_tr.iloc[:,1], df_tr.iloc[:, 2],  c=kmeans.labels_.astype(float))
-plt.xlim(0, 40)
-plt.xlabel('Age')
-plt.ylim(0, 10000)
-plt.ylabel('Total spent in €')
-savePlot(plt, 'testplot')
-#plt.show()
+plt.xlabel('Alter')
+plt.ylabel('Anzahl')
+n, bins, patches = plt.hist(df_tr['Age'])
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
 
+plt.title('Histogramm Alter', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_Age')
 
+# plt.figure(figsize=(12, 12))
+# f, (ax1, ax2) = plt.subplots(2)
+# arr = np.random.normal(10, 3, size=1000)
+# cnts, bins = np.histogram(df_tr['Age'], bins=10, range=(df_tr['Age'].min(), df_tr['Age'].max()))
+# ax1.bar(bins[:-1] + np.diff(bins) / 2, cnts, np.diff(bins))
+# ax2.hist(df_tr['Age'], bins=10, range=(df_tr['Age'].min(), df_tr['Age'].max()))
+# savePlot(plt, 'Numpy_Histogram_Age')
 
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Anzahl der Bestellungen')
+plt.ylabel('Anzahl')
+n, bins, patches = plt.hist(df_tr['OrderCount'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Anzahl der Bestellungen', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_OrderCount')
+
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Anzahl der Bestellungen')
+plt.ylabel('Anzahl')
+plt.ylim(0, 100)
+n, bins, patches = plt.hist(df_tr['OrderCount'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Anzahl der Bestellungen', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_OrderCount_zoomed')
+
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Ausgaben in €')
+plt.ylabel('Anzahl')
+n, bins, patches = plt.hist(df_tr['TotalOrderSum'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Ausgaben in €', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_TotalOrderSum')
+
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Ausgaben in €')
+plt.xticks(np.arange(0, 225000, 25000))
+plt.ylabel('Anzahl')
+plt.ylim(0, 40)
+n, bins, patches = plt.hist(df_tr['TotalOrderSum'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Ausgaben in €', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_TotalOrderSum_zoomed')
 
 
 ################ elbow method to find best number of clusters ###########
@@ -158,7 +252,8 @@ savePlot(plt, 'testplot')
 # savePlot(plt, 'elbow_method')
 ################ end elbow method to find best number of clusters ###########
 
-
+####################   2D/3D-Plots   ####################
+plt.rc('axes', labelsize=30)
 fig = plt.figure(figsize=(16,16))
 # ax = fig.add_subplot(111)
 ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=20, azim=210)
@@ -168,9 +263,9 @@ z = np.array(df_tr.iloc[:,2])
 # ax.w_xaxis.set_ticklabels([])
 # ax.w_yaxis.set_ticklabels([])
 # ax.w_zaxis.set_ticklabels([])
-ax.set_xlabel('Age')
-ax.set_ylabel('Number of orders')
-ax.set_zlabel('Total spent in €')
+ax.set_xlabel('Alter', labelpad=15)
+ax.set_ylabel('Anzahl der Bestellungen', labelpad=15)
+ax.set_zlabel('Ausgaben in €', labelpad=25)
 # ax.axes.set_ylim3d(bottom=0, top=10)
 # ax.axes.set_zlim3d(bottom=0, top=2500)
 # plt.gca().invert_yaxis()
@@ -178,6 +273,7 @@ ax.scatter(x,y,z, c=kmeans.labels_.astype(float))
 # savePlot(plt, '3d_plot')
 savePlot(plt, '3d_plot_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
+plt.rc('axes', labelsize=30)
 fig = plt.figure(figsize=(16,16))
 # ax = fig.add_subplot(111)
 ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=20, azim=210)
@@ -187,18 +283,18 @@ z = np.array(df_tr.iloc[:,2])
 # ax.w_xaxis.set_ticklabels([])
 # ax.w_yaxis.set_ticklabels([])
 # ax.w_zaxis.set_ticklabels([])
-ax.set_xlabel('Age')
-ax.set_ylabel('Number of orders')
-ax.set_zlabel('Total spent in €')
+ax.set_xlabel('Alter', labelpad=15)
+ax.set_ylabel('Anzahl der Bestellungen', labelpad=15)
+ax.set_zlabel('Ausgaben in €', labelpad=25)
 ax.axes.set_ylim3d(bottom=0, top=10)
 ax.axes.set_zlim3d(bottom=0, top=2500)
 # plt.gca().invert_yaxis()
 ax.scatter(x,y,z, c=kmeans.labels_.astype(float))
 # savePlot(plt, '3d_plot')
-savePlot(plt, '3d_plot_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
+savePlot(plt, '3d_plot_zoomed_' + datetime.datetime.now().strftime('%Y%m%d%H%M%S%f'))
 
 
-##############################################
+####################   PCA-Plots   ####################
 # PCA
 fig = plt.figure(figsize=(8, 6))
 ax = Axes3D(fig, elev=-150, azim=110)

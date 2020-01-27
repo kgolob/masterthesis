@@ -1,16 +1,11 @@
-import datetime
+import os
 import os
 import shutil
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
-import seaborn as sns
-from mpl_toolkits.mplot3d import Axes3D
-from scipy import stats
 from scipy.cluster.hierarchy import dendrogram, linkage
-from sklearn.cluster import KMeans, AgglomerativeClustering
-from sklearn.decomposition import PCA
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import normalize
 
 mandant = 'xxxlutz_de'
@@ -53,6 +48,8 @@ df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mand
 
 # drop customers which do not have a gender assigned - they do not provide any value for segmentation
 df = df.dropna(subset=['Gender'])
+# drop customers with negative orderSum - could have happend by a bug in the shop
+df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -110,7 +107,14 @@ df_tr['clusters'] = labels
 clmns.extend(['clusters'])
 
 # lets analyze the clusters
+printToFile('Cluster means')
 printToFile(df_tr[clmns].groupby(['clusters']).mean())
+printToFile('#################################################')
+printToFile('Cluster min')
+printToFile(df_tr[clmns].groupby(['clusters']).min())
+printToFile('#################################################')
+printToFile('Cluster max')
+printToFile(df_tr[clmns].groupby(['clusters']).max())
 printToFile('#################################################')
 
 #################################
