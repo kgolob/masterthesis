@@ -52,6 +52,8 @@ df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mand
 df = df.dropna(subset=['Gender'])
 # drop customers with negative orderSum - could have happened by a bug in the shop
 df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
+# drop company customers - its only 1 in 250k customers and this one has no orders or anything else of value
+df.drop(df[ (df['Gender'] == 'COMPANY') ].index, inplace=True)
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -232,7 +234,54 @@ for c, p in zip(col, patches):
 plt.title('Histogramm Ausgaben in €', fontdict={'fontsize': 30})
 savePlot(plt, 'Histogram_TotalOrderSum_zoomed')
 
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Anzahl der Reservierungen')
+plt.ylabel('Anzahl')
+n, bins, patches = plt.hist(df_tr['ReservationCount'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
 
+plt.title('Histogramm Anzahl der Reservierungen', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_ReservationCount')
+
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Anzahl der Reservierungen')
+#plt.xticks(np.arange(0, 225000, 25000))
+plt.ylabel('Anzahl')
+plt.ylim(0, 2500)
+n, bins, patches = plt.hist(df_tr['ReservationCount'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Anzahl der Reservierungen', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_ReservationCount_zoomed')
+
+cm = plt.cm.get_cmap('RdYlBu_r')
+plt.figure(figsize=(12, 12))
+plt.xlabel('Anzahl der Reservierungen')
+#plt.xticks(np.arange(0, 225000, 25000))
+plt.ylabel('Anzahl')
+plt.ylim(0, 500)
+n, bins, patches = plt.hist(df_tr['ReservationCount'], bins=50)
+bin_centers = 0.5 * (bins[:-1] + bins[1:])
+# scale values to interval [0,1]
+col = bin_centers - min(bin_centers)
+col /= max(col)
+for c, p in zip(col, patches):
+    plt.setp(p, 'facecolor', cm(c))
+
+plt.title('Histogramm Anzahl der Reservierungen', fontdict={'fontsize': 30})
+savePlot(plt, 'Histogram_ReservationCount_zoomed2')
 ################ elbow method to find best number of clusters ###########
 # k means determine k
 # distortions = []

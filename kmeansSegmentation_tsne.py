@@ -50,6 +50,8 @@ df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mand
 df = df.dropna(subset=['Gender'])
 # drop customers with negative orderSum - could have happened by a bug in the shop
 df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
+# drop company customers - its only 1 in 250k customers and this one has no orders or anything else of value
+df.drop(df[ (df['Gender'] == 'COMPANY') ].index, inplace=True)
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
