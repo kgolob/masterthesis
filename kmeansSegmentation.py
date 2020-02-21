@@ -1,6 +1,7 @@
 import datetime
 import os
 import shutil
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,7 +13,8 @@ from sklearn.decomposition import PCA
 
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
-path = '/media/backup/MasterThesis/output'
+#path = '/media/backup/MasterThesis/output'
+path = '/home/kgolob/Repos/masterthesis/out/kmeans_output'
 clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
@@ -21,7 +23,7 @@ if not os.path.exists(outputPath):
     os.makedirs(outputPath)
 outputFile = open(outputPath + 'out.txt', 'w')
 # set output options
-pd.set_option('display.max_columns', 15)
+pd.set_option('display.max_columns', 99)
 pd.set_option('display.max_rows', 999999)
 pd.set_option('display.width', 1000)
 
@@ -46,7 +48,8 @@ def printClusterToFiles(data, file) :
 
 
 # load data from csv
-df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mandant, sampleSize), delimiter=';')
+#df = pd.read_csv('/media/backup/MasterThesis/customerData_{}_{}.csv'.format(mandant, sampleSize), delimiter=';')
+df = pd.read_csv('/home/kgolob/Repos/masterthesis/customerData_{}_{}.csv'.format(mandant, sampleSize), delimiter=';')
 
 # drop customers which do not have a gender assigned - they do not provide any value for segmentation
 df = df.dropna(subset=['Gender'])
@@ -76,14 +79,20 @@ printToFile('#################################################')
 printToFile(list(df_tr.columns))
 printToFile('#################################################')
 
+
 # standardize
 clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
 df_tr_std = stats.zscore(df_tr[clmns])
+
+printToFile("Compute kmeans clustering...")
+st = time.time()
 
 # cluster the data
 kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1).fit(df_tr_std)
 labels = kmeans.labels_
 
+elapsed_time = time.time() - st
+printToFile("Elapsed time: %.2fs" % elapsed_time)
 # glue back to original data
 df_tr['clusters'] = labels
 
@@ -99,6 +108,12 @@ printToFile(df_tr[clmns].groupby(['clusters']).min())
 printToFile('#################################################')
 printToFile('Cluster max')
 printToFile(df_tr[clmns].groupby(['clusters']).max())
+printToFile('#################################################')
+printToFile('Cluster std')
+printToFile(df_tr[clmns].groupby(['clusters']).std())
+printToFile('#################################################')
+printToFile('describe')
+printToFile(df_tr[clmns].groupby(['clusters']).describe())
 printToFile('#################################################')
 
 #################################

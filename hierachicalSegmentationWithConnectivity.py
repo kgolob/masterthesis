@@ -1,7 +1,6 @@
 import os
-import os
 import shutil
-import time
+import time as time
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -10,9 +9,9 @@ from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import normalize
 
 mandant = 'xxxlutz_de'
-sampleSize = '50k'
+sampleSize = '250k'
 #path = '/media/backup/MasterThesis/hierachical_output'
-path = '/home/kgolob/Repos/masterthesis/out/hierachical_output'
+path = '/home/kgolob/Repos/masterthesis/out/hierachical_connectivity_output'
 clusters = 5
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
@@ -99,15 +98,26 @@ print(data_scaled.head())
 # plt.axhline(y=6, color='r', linestyle='--')
 # savePlot(plt, 'dendrogram_clusters')
 
-clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
-
-printToFile("Compute unstructured hierarchical clustering...")
+# Define the structure A of the data. Here a 10 nearest neighbors
+from sklearn.neighbors import kneighbors_graph
+printToFile("Compute connectivity matrix..")
 st = time.time()
-cluster = AgglomerativeClustering(n_clusters=clusters, affinity='euclidean', linkage='ward')
-cluster.fit_predict(data_scaled)
-
+connectivity = kneighbors_graph(data_scaled, n_neighbors=300, include_self=False)
 elapsed_time = time.time() - st
 printToFile("Elapsed time: %.2fs" % elapsed_time)
+#print(connectivity)
+# #############################################################################
+# Compute clustering
+printToFile("Compute structured hierarchical clustering...")
+st = time.time()
+cluster = AgglomerativeClustering(n_clusters=clusters, connectivity=connectivity, linkage='ward')
+cluster.fit_predict(data_scaled)
+elapsed_time = time.time() - st
+printToFile("Elapsed time: %.2fs" % elapsed_time)
+
+clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
+#cluster = AgglomerativeClustering(n_clusters=clusters, affinity='euclidean', linkage='ward')
+#cluster.fit_predict(data_scaled)
 
 labels = cluster.labels_
 

@@ -1,6 +1,7 @@
 import datetime
 import os
 import shutil
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,7 +21,7 @@ if not os.path.exists(outputPath):
     os.makedirs(outputPath)
 outputFile = open(outputPath + 'out.txt', 'w')
 # set output options
-pd.set_option('display.max_columns', 15)
+pd.set_option('display.max_columns', 99)
 pd.set_option('display.max_rows', 999999)
 pd.set_option('display.width', 1000)
 
@@ -80,9 +81,17 @@ printToFile('#################################################')
 clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
 df_tr_std = stats.zscore(df_tr[clmns])
 
+
+
 reduced_data = PCA(n_components=2).fit_transform(df_tr_std)
+
+printToFile("Compute structured hierarchical clustering...")
+st = time.time()
 kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1)
 kmeans.fit(reduced_data)
+
+elapsed_time = time.time() - st
+printToFile("Elapsed time: %.2fs" % elapsed_time)
 
 # Step size of the mesh. Decrease to increase the quality of the VQ.
 h = .02     # point in the mesh [x_min, x_max]x[y_min, y_max].
@@ -146,6 +155,12 @@ printToFile(df_tr[clmns].groupby(['clusters']).min())
 printToFile('#################################################')
 printToFile('Cluster max')
 printToFile(df_tr[clmns].groupby(['clusters']).max())
+printToFile('#################################################')
+printToFile('Cluster std')
+printToFile(df_tr[clmns].groupby(['clusters']).std())
+printToFile('#################################################')
+printToFile('describe')
+printToFile(df_tr[clmns].groupby(['clusters']).describe())
 printToFile('#################################################')
 
 #################################
