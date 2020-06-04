@@ -15,8 +15,8 @@ from sklearn.decomposition import PCA
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
 #path = '/media/backup/MasterThesis/output'
-path = '/home/kgolob/Repos/masterthesis/out/kmeans_output'
-clusters = 9
+path = '/home/kgolob/Repos/masterthesis/out/kmeans_male_with_age_only_output'
+clusters = 6
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters/'.format(path, mandant, sampleSize, clusters)
@@ -58,6 +58,9 @@ df = df.dropna(subset=['Gender'])
 df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
 # drop company customers - its only 1 in 250k customers and this one has no orders or anything else of value
 df.drop(df[ (df['Gender'] == 'COMPANY') ].index, inplace=True)
+# drop female gender, to get male only data
+df.drop(df[ (df['Gender'] == 'FEMALE') ].index, inplace=True)
+
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -65,11 +68,19 @@ df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
 # replace all NA cells with 0
 df_metrics = df_metrics.fillna(0)
 
+# drop all customers with no age given
+df_metrics.drop(df_metrics[ (df_metrics['Age'] == 0) ].index, inplace=True)
+
+# create category for males of age 40+
+df_metrics['Targetgroup'] = 'FALSE'
+df_metrics.loc[df_metrics['Age'] >= 40, 'Targetgroup'] = 'TRUE'
+#df_metrics.loc[(df_metrics['Age'] >= 0) & (df_metrics['Age'] < 40), 'Age_categorical'] = 'FALSE'
+
 # make a copy of data frame
 df_tr = df_metrics
 
 # transform to dummies
-df_tr = pd.get_dummies(df_tr, columns=['Gender',  'BonusCardOwner'])
+df_tr = pd.get_dummies(df_tr, columns=['Gender',  'BonusCardOwner', 'Targetgroup'])
 printToFile('#################################################')
 printToFile(df_tr.describe())
 printToFile('#################################################')
@@ -82,7 +93,7 @@ printToFile('#################################################')
 
 
 # standardize
-clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
+clmns = ['OrderCount', 'TotalOrderSum', 'ReservationCount', 'Targetgroup_FALSE', 'Targetgroup_TRUE', 'BonusCardOwner_False', 'BonusCardOwner_True']
 df_tr_std = stats.zscore(df_tr[clmns])
 
 printToFile("Compute kmeans clustering...")
