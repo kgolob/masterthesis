@@ -15,7 +15,7 @@ sampleSize = '250k'
 path = '/home/kgolob/Repos/masterthesis/out/pca_output'
 clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
-pcaDimensions = 3
+pcaDimensions = 4
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters-{}-dimensions/'.format(path, mandant, sampleSize, clusters, pcaDimensions)
 if not os.path.exists(outputPath):

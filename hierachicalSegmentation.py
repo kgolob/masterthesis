@@ -13,7 +13,7 @@ mandant = 'xxxlutz_de'
 sampleSize = '50k'
 #path = '/media/backup/MasterThesis/hierachical_output'
 path = '/home/kgolob/Repos/masterthesis/out/hierachical_output'
-clusters = 9
+clusters = 15
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters/'.format(path, mandant, sampleSize, clusters)
@@ -147,6 +147,9 @@ for key, item in grouped_df:
     printClusterToFiles(grouped_df.get_group(key), "{}cluster/cluster{}.txt".format(outputPath, key))
 #####################################
 outputFile.flush()
+
+# save dataframe to file
+df_tr.to_csv(path_or_buf= outputPath +'clustered_customerData_{}_{}.csv'.format(mandant, sampleSize), sep=';')
 
 plt.figure(figsize=(10, 7))
 plt.scatter(df_tr['OrderCount'], df_tr['TotalOrderSum'], c=cluster.labels_)

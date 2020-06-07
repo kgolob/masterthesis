@@ -11,11 +11,12 @@ from scipy import stats
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import normalize
 
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
 #path = '/media/backup/MasterThesis/output'
-path = '/home/kgolob/Repos/masterthesis/out/kmeans_output'
+path = '/home/kgolob/Repos/masterthesis/out/kmeans_output_TEST'
 clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
