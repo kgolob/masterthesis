@@ -82,10 +82,10 @@ printToFile('#################################################')
 # clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
 # df_tr_std = stats.zscore(df_tr[clmns])
 # sns.clustermap(df_tr)
-
-data_scaled = normalize(df_tr)
-data_scaled = pd.DataFrame(data_scaled, columns=df_tr.columns)
-print(data_scaled.head())
+#
+# data_scaled = normalize(df_tr)
+# data_scaled = pd.DataFrame(data_scaled, columns=df_tr.columns)
+# print(data_scaled.head())
 
 
 # plt.figure(figsize=(10, 7))
@@ -104,7 +104,7 @@ clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMAL
 printToFile("Compute unstructured hierarchical clustering...")
 st = time.time()
 cluster = AgglomerativeClustering(n_clusters=clusters, affinity='euclidean', linkage='ward')
-cluster.fit_predict(data_scaled)
+cluster.fit_predict(df_tr)
 
 elapsed_time = time.time() - st
 printToFile("Elapsed time: %.2fs" % elapsed_time)
@@ -149,14 +149,14 @@ for key, item in grouped_df:
 outputFile.flush()
 
 plt.figure(figsize=(10, 7))
-plt.scatter(data_scaled['OrderCount'], data_scaled['TotalOrderSum'], c=cluster.labels_)
+plt.scatter(df_tr['OrderCount'], df_tr['TotalOrderSum'], c=cluster.labels_)
 plt.xlabel('OrderCount')
 plt.ylabel('TotalOrderSum')
 savePlot(plt, '2d')
 
 
 plt.figure(figsize=(10, 7))
-plt.scatter(data_scaled['Age'], data_scaled['TotalOrderSum'], c=cluster.labels_)
+plt.scatter(df_tr['Age'], df_tr['TotalOrderSum'], c=cluster.labels_)
 plt.xlabel('Age')
 plt.ylabel('TotalOrderSum')
 savePlot(plt, '2d_2')

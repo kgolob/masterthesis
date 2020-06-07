@@ -11,12 +11,13 @@ from scipy import stats
 from scipy.spatial.distance import cdist
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import normalize
 
 mandant = 'xxxlutz_de'
 sampleSize = '250k'
 #path = '/media/backup/MasterThesis/output'
-path = '/home/kgolob/Repos/masterthesis/out/kmeans_female_with_age_only_output'
-clusters = 5
+path = '/home/kgolob/Repos/masterthesis/out/kmeans_output_no_zscale'
+clusters = 9
 # dt = datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
 dt = 'test'
 outputPath = '{}_{}_{}_{}-clusters/'.format(path, mandant, sampleSize, clusters)
@@ -58,9 +59,6 @@ df = df.dropna(subset=['Gender'])
 df.drop(df[ (df['TotalOrderSum'] < 0) ].index, inplace=True)
 # drop company customers - its only 1 in 250k customers and this one has no orders or anything else of value
 df.drop(df[ (df['Gender'] == 'COMPANY') ].index, inplace=True)
-# drop male gender, to get female only data
-df.drop(df[ (df['Gender'] == 'MALE') ].index, inplace=True)
-
 
 # drop not relevant columns
 df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
@@ -68,19 +66,11 @@ df_metrics = df.drop(columns=['Id', 'City', 'PostalCode'])
 # replace all NA cells with 0
 df_metrics = df_metrics.fillna(0)
 
-# drop all customers with no age given
-df_metrics.drop(df_metrics[ (df_metrics['Age'] == 0) ].index, inplace=True)
-
-# create category for females of age between 20-35
-df_metrics['Targetgroup'] = 'FALSE'
-df_metrics.loc[(df_metrics['Age'] >= 20) & (df_metrics['Age'] <= 35), 'Targetgroup'] = 'TRUE'
-# df_metrics.loc[(df_metrics['Age'] >= 0) & (df_metrics['Age'] < 40), 'Targetgroup'] = 'FALSE'
-
 # make a copy of data frame
 df_tr = df_metrics
 
 # transform to dummies
-df_tr = pd.get_dummies(df_tr, columns=['Gender',  'BonusCardOwner', 'Targetgroup'])
+df_tr = pd.get_dummies(df_tr, columns=['Gender',  'BonusCardOwner'])
 printToFile('#################################################')
 printToFile(df_tr.describe())
 printToFile('#################################################')
@@ -93,14 +83,14 @@ printToFile('#################################################')
 
 
 # standardize
-clmns = ['OrderCount', 'TotalOrderSum', 'ReservationCount', 'Targetgroup_FALSE', 'Targetgroup_TRUE', 'BonusCardOwner_False', 'BonusCardOwner_True']
-df_tr_std = stats.zscore(df_tr[clmns])
+clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
+# df_tr_std = stats.zscore(df_tr[clmns])
 
 printToFile("Compute kmeans clustering...")
 st = time.time()
 
 # cluster the data
-kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1).fit(df_tr_std)
+kmeans = KMeans(n_clusters=clusters, random_state=0, init='k-means++', n_jobs=-1).fit(df_tr)
 labels = kmeans.labels_
 
 elapsed_time = time.time() - st

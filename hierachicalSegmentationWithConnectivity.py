@@ -4,6 +4,7 @@ import time as time
 
 import matplotlib.pyplot as plt
 import pandas as pd
+from scipy import stats
 from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.preprocessing import normalize
@@ -77,14 +78,14 @@ printToFile('#################################################')
 printToFile(list(df_tr.columns))
 printToFile('#################################################')
 
-# standardize
+# standardize - not possible, connectivity matrix will not compute otherwise
 # clmns = ['Age', 'OrderCount', 'TotalOrderSum', 'ReservationCount', 'Gender_FEMALE', 'Gender_MALE', 'BonusCardOwner_False', 'BonusCardOwner_True']
 # df_tr_std = stats.zscore(df_tr[clmns])
-# sns.clustermap(df_tr)
-
-data_scaled = normalize(df_tr)
-data_scaled = pd.DataFrame(data_scaled, columns=df_tr.columns)
-print(data_scaled.head())
+# # sns.clustermap(df_tr)
+#
+# data_scaled = normalize(df_tr)
+# data_scaled = pd.DataFrame(data_scaled, columns=df_tr.columns)
+# print(data_scaled.head())
 
 
 # plt.figure(figsize=(10, 7))
@@ -102,7 +103,7 @@ print(data_scaled.head())
 from sklearn.neighbors import kneighbors_graph
 printToFile("Compute connectivity matrix..")
 st = time.time()
-connectivity = kneighbors_graph(data_scaled, n_neighbors=300, include_self=False)
+connectivity = kneighbors_graph(df_tr, n_neighbors=300, include_self=False)
 elapsed_time = time.time() - st
 printToFile("Elapsed time: %.2fs" % elapsed_time)
 #print(connectivity)
@@ -111,7 +112,7 @@ printToFile("Elapsed time: %.2fs" % elapsed_time)
 printToFile("Compute structured hierarchical clustering...")
 st = time.time()
 cluster = AgglomerativeClustering(n_clusters=clusters, connectivity=connectivity, linkage='ward')
-cluster.fit_predict(data_scaled)
+cluster.fit_predict(df_tr)
 elapsed_time = time.time() - st
 printToFile("Elapsed time: %.2fs" % elapsed_time)
 
@@ -159,14 +160,14 @@ for key, item in grouped_df:
 outputFile.flush()
 
 plt.figure(figsize=(10, 7))
-plt.scatter(data_scaled['OrderCount'], data_scaled['TotalOrderSum'], c=cluster.labels_)
+plt.scatter(df_tr['OrderCount'], df_tr['TotalOrderSum'], c=cluster.labels_)
 plt.xlabel('OrderCount')
 plt.ylabel('TotalOrderSum')
 savePlot(plt, '2d')
 
 
 plt.figure(figsize=(10, 7))
-plt.scatter(data_scaled['Age'], data_scaled['TotalOrderSum'], c=cluster.labels_)
+plt.scatter(df_tr['Age'], df_tr['TotalOrderSum'], c=cluster.labels_)
 plt.xlabel('Age')
 plt.ylabel('TotalOrderSum')
 savePlot(plt, '2d_2')
